@@ -34,9 +34,6 @@ router = APIRouter(
     tags=["Заказы 🚚"],
 )
 
-@router.get("/")
-async def list_orders():
-    return {'orders': 'This is a placeholder for the order list'}
 
 @router.get("/users/{user_id}", response_model=OrderCount)
 async def get_user_bottle_count(user_id: int, db: AsyncSession = Depends(get_async_session)):
