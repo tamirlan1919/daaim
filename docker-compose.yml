@@ -9,6 +9,11 @@ services:
     environment:
       - PYTHONPATH=/app
     command: uvicorn api.app:app --host 0.0.0.0 --port 8000
+    ports:
+      - "80:8000"        # 👈 публикуем API наружу (или "8000:8000", если хочешь именно 8000)
+    depends_on:
+      - db
+    restart: unless-stopped
 
   db:
     image: postgres:15
@@ -22,8 +27,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-
-
   bot:
     build: ./bot
     command: ["python", "run.py"]
@@ -33,6 +36,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/daim
     depends_on:
       - db
+    restart: unless-stopped
 
 volumes:
   pgdata:
