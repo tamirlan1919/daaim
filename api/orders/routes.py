@@ -31,7 +31,7 @@ def get_price_by_total(total_bottles: int) -> int:
 
 # --- Роуты ---
 
-@router.get("/users/{user_id}", response_model=OrderCount)
+@router.get("/users/count/{user_id}", response_model=OrderCount)
 async def get_user_bottle_count(user_id: int, db: AsyncSession = Depends(get_async_session)):
     """Сколько всего бутылок оплатил пользователь"""
     if user_id <= 0:
@@ -39,7 +39,7 @@ async def get_user_bottle_count(user_id: int, db: AsyncSession = Depends(get_asy
     total_bottles = await get_total_bottles_by_user(db, user_id)
     return {"user_id": user_id, "total_bottles": total_bottles}
 
-@router.get("/orders/users/{user_id}")
+@router.get("/users/{user_id}")
 async def get_user_orders(user_id: int, db: AsyncSession = Depends(get_async_session)):
     """Получить все заказы пользователя"""
     if user_id <= 0:
