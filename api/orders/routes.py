@@ -39,12 +39,12 @@ async def get_user_bottle_count(user_id: int, db: AsyncSession = Depends(get_asy
     total_bottles = await get_total_bottles_by_user(db, user_id)
     return {"user_id": user_id, "total_bottles": total_bottles}
 
-@router.get("/users/{user_id}")
-async def get_user_orders(user_id: int, db: AsyncSession = Depends(get_async_session)):
+@router.get("/users/{telegram_id}")
+async def get_user_orders(telegram_id: int, db: AsyncSession = Depends(get_async_session)):
     """Получить все заказы пользователя"""
     if user_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user ID")
-    result = await db.execute(select(Order).where(Order.user_id == user_id))
+    result = await db.execute(select(Order).where(Order.telegram_id == telegram_id))
     orders = result.scalars().all()
     return orders
 
