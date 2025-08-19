@@ -12,11 +12,13 @@ from aiogram.client.default import DefaultBotProperties  # 👈 добавь
 
 async def create_tables():
     async with async_engine.begin() as conn:
+        await
         await conn.run_sync(Base.metadata.create_all) # ♻️ создаст заново
 
 async def main():
     logging.basicConfig(level=logging.INFO)
     await create_tables()  # ← добавь это
+
     # ⬇️ правильная инициализация
     bot = Bot(
         BOT_TOKEN,
