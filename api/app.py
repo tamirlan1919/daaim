@@ -8,11 +8,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://daim-web-zeta.vercel.app"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # 👈 разрешаем все домены
+    allow_credentials=False,  # 👈 обязательно False, если allow_origins=["*"]
+    allow_methods=["*"],  # 👈 разрешаем все методы (GET, POST, PUT, DELETE и т.д.)
+    allow_headers=["*"],  # 👈 разрешаем все заголовки
 )
+
 
 app.include_router(users_router)
 app.include_router(orders_router)
