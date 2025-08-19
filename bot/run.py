@@ -5,15 +5,23 @@ from config import BOT_TOKEN
 from handlers import router
 from database.engine import engine as async_engine
 from database.models import Base
+from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties  # 👈 добавь
+
+
 
 async def create_tables():
     async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all) # ♻️ создаст заново
 
 async def main():
     logging.basicConfig(level=logging.INFO)
     await create_tables()  # ← добавь это
-    bot = Bot(BOT_TOKEN)
+    # ⬇️ правильная инициализация
+    bot = Bot(
+        BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    )
     dp = Dispatcher()
     dp.include_router(router)
     await dp.start_polling(bot)
