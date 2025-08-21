@@ -12,7 +12,7 @@ services:
       - PYTHONPATH=/app
     command: uvicorn api.app:app --host 0.0.0.0 --port 8000
     expose:
-      - "8000"    # 👈 доступно только внутри сети Docker (для Nginx)
+      - "8000"    # 👈 доступно только внутри сервера (системный Nginx будет проксировать)
     depends_on:
       - db
     restart: unless-stopped
@@ -38,19 +38,6 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/daim
     depends_on:
       - db
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:latest
-    container_name: daaim_nginx
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/certs:ro
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - api
     restart: unless-stopped
 
 volumes:
