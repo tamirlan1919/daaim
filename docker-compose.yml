@@ -11,8 +11,8 @@ services:
     environment:
       - PYTHONPATH=/app
     command: uvicorn api.app:app --host 0.0.0.0 --port 8000
-    expose:
-      - "8000"    # 👈 доступно только внутри сервера (системный Nginx будет проксировать)
+    ports:
+      - "8000:8000"   # 👈 проброс наружу, чтобы Nginx видел API
     depends_on:
       - db
     restart: unless-stopped
