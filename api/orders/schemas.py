@@ -60,6 +60,8 @@ class OrderRead(BaseModel):
     is_paid: bool
     total_price_cents: int
     items: List[OrderItemRead]
+    status: OrderStatus   # 👈 добавить это поле
+
 
     class Config:
         from_attributes = True
