@@ -205,7 +205,7 @@ async def set_order_status(db: AsyncSession, order_id: int, status: str) -> Opti
     return await update_order_status(db, order_id, status)
 
 
-async def get_total_bottles_by_user(db: AsyncSession, user_id: int) -> int:
+async def get_total_bottles_by_user(db: AsyncSession, telegram_id: int) -> int:
     """
     Накопительное количество бутылок пользователя (только оплаченные заказы).
     Суммируем OrderItem.quantity для оплаченных заказов пользователя.
@@ -213,7 +213,7 @@ async def get_total_bottles_by_user(db: AsyncSession, user_id: int) -> int:
     result = await db.execute(
         select(func.coalesce(func.sum(OrderItem.quantity), 0))
         .join(Order, OrderItem.order_id == Order.id)
-        .where((Order.user_id == user_id) & (Order.is_paid == True))
+        .where((Order.telegram_id == telegram_id) & (Order.is_paid == True))
     )
     return int(result.scalar_one())
 
