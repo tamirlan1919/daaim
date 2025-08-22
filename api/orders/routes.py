@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List, Optional
 
+from sqlalchemy.orm import selectinload
+
 from bot.database.engine import get_async_session
 from bot.database.repository import get_user_by_telegram_id, get_total_bottles_by_user
 from bot.database.models import Order, OrderItem, Product, User
@@ -58,8 +60,14 @@ async def get_user_orders(
     if telegram_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user ID")
 
-    stmt = select(Order).where(Order.telegram_id == telegram_id)
-
+    stmt = (
+        select(Order)
+        .where(Order.telegram_id == telegram_id)
+        .options(
+            selectinload(Order.user),
+            selectinload(Order.items).selectinload(OrderItem.product),
+        )
+    )
     # title: число -> поиск по Order.id; иначе ILIKE по адресу
     if title:
         t = title.strip()
