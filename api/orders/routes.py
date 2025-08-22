@@ -33,11 +33,11 @@ def get_price_by_total(total_bottles: int) -> int:
 
 @router.get("/users/bottles/{telegram_id}", response_model=OrderCount)
 async def get_user_bottle_count(telegram_id: int, db: AsyncSession = Depends(get_async_session)):
-    """Сколько всего бутылок оплатил пользователь"""
     if telegram_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user ID")
     total_bottles = await get_total_bottles_by_user(db, telegram_id)
-    return {"telegram_id": telegram_id, "total_bottles": total_bottles}
+    # вариант с алиасом
+    return OrderCount(user_id=telegram_id, total_bottles=total_bottles).model_dump(by_alias=True)
 
 @router.get("/users/{telegram_id}")
 async def get_user_orders(telegram_id: int, db: AsyncSession = Depends(get_async_session)):

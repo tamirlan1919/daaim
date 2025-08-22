@@ -2,9 +2,15 @@
 from pydantic import BaseModel, Field, conint
 from typing import List
 
+
 class OrderCount(BaseModel):
-    user_id: int
+    user_id: int = Field(..., alias="telegram_id")
     total_bottles: int
+
+    class Config:
+        populate_by_name = True  # pydantic v1
+        # pydantic v2:
+        # model_config = {"populate_by_name": True}
 
 class OrderItemCreate(BaseModel):
     product_id: int = Field(..., example=1)
