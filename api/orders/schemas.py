@@ -1,6 +1,8 @@
 # schemas.py
+from enum import Enum
+
 from pydantic import BaseModel, Field, conint
-from typing import List
+from typing import List, Optional
 
 
 class OrderCount(BaseModel):
@@ -12,9 +14,24 @@ class OrderCount(BaseModel):
         # pydantic v2:
         # model_config = {"populate_by_name": True}
 
+
+class OrderStatus(str, Enum):
+    processing = "processing"  # оформляется / на сборке
+    in_transit = "in_transit"  # передан в доставку
+    declined = "declined"  # отменён / отклонён
+    completed = "completed"  # доставлен / завершён
+
+
+class OrderUpdateAdmin(BaseModel):
+    status: Optional[OrderStatus] = None
+    is_paid: Optional[bool] = None
+
+
 class OrderItemCreate(BaseModel):
     product_id: int = Field(..., example=1)
     quantity: int = Field(..., gt=0, example=3)
+
+
 class OrderCreate(BaseModel):
     telegram_id: int
     address: str
@@ -22,6 +39,7 @@ class OrderCreate(BaseModel):
     is_paid: bool = False
     items: List[OrderItemCreate]
     total_price_cents: int
+
 
 class OrderItemRead(BaseModel):
     id: int
@@ -32,6 +50,7 @@ class OrderItemRead(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class OrderRead(BaseModel):
     id: int

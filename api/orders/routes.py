@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from typing import List
+from typing import List, Optional
 
 from bot.database.engine import get_async_session
 from bot.database.repository import get_user_by_telegram_id, get_total_bottles_by_user
-from bot.database.models import Order, OrderItem, Product, OrderStatus
-from .schemas import OrderCreate, OrderRead, OrderCount
+from bot.database.models import Order, OrderItem, Product, User
+from .schemas import OrderCreate, OrderRead, OrderCount,  OrderStatus, OrderUpdateAdmin
 
 router = APIRouter(
     prefix="/orders",
@@ -39,14 +39,46 @@ async def get_user_bottle_count(telegram_id: int, db: AsyncSession = Depends(get
     # вариант с алиасом
     return OrderCount(user_id=telegram_id, total_bottles=total_bottles).model_dump(by_alias=True)
 
-@router.get("/users/{telegram_id}")
-async def get_user_orders(telegram_id: int, db: AsyncSession = Depends(get_async_session)):
-    """Получить все заказы пользователя"""
-    if telegram_id is None:
+@router.get("/users/{telegram_id}", response_model=List[OrderRead])
+async def get_user_orders(
+    telegram_id: int,
+    db: AsyncSession = Depends(get_async_session),
+    title: Optional[str] = Query(
+        None, description="Номер заказа (id) или часть адреса"
+    ),
+    status: Optional[OrderStatus] = Query(
+        None, description="Статус: processing | in_transit | declined | completed"
+    ),
+    limit: Optional[int] = Query(
+        None, ge=1, le=1000, description="Максимум заказов (1–1000)"
+    ),
+
+):
+    """Получить заказы пользователя с фильтрами по адресу/номеру и статусу"""
+    if telegram_id <= 0:
         raise HTTPException(status_code=400, detail="Invalid user ID")
-    result = await db.execute(select(Order).where(Order.telegram_id == telegram_id))
-    orders = result.scalars().all()
-    return orders
+
+    stmt = select(Order).where(Order.telegram_id == telegram_id)
+
+    # title: число -> поиск по Order.id; иначе ILIKE по адресу
+    if title:
+        t = title.strip()
+        if t.isdigit():
+            stmt = stmt.where(Order.id == int(t))
+        else:
+            stmt = stmt.where(Order.address.ilike(f"%{t}%"))
+
+    if status is not None:
+        stmt = stmt.where(Order.status == status)
+
+    stmt = stmt.order_by(Order.date.desc())
+
+
+    if limit:
+        stmt = stmt.limit(limit)
+
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
 
 @router.post("/", response_model=OrderRead)
@@ -130,4 +162,28 @@ async def get_order(order_id: int, db: AsyncSession = Depends(get_async_session)
     order = result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
+
+@router.patch("/{order_id}", response_model=OrderRead)
+async def admin_update_order(
+    order_id: int,
+    payload: OrderUpdateAdmin,
+    db: AsyncSession = Depends(get_async_session),
+):
+    """
+    Админский апдейт заказа: можно менять статус и ключ is_paid
+    """
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if payload.status is not None:
+        order.status = payload.status
+    if payload.is_paid is not None:
+        order.is_paid = payload.is_paid
+
+    await db.commit()
+    await db.refresh(order)
     return order
